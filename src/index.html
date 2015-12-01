@@ -1,0 +1,25 @@
+<html>
+	<head>
+		<style>
+			body {
+				margin: 0 auto;
+				width: 1024px;
+				padding-top: 20px;
+			}
+			
+			h1, h2, h3 {
+				text-transform: uppercase;
+			}
+		</style>
+		<link rel="stylesheet" href="../bower_components/font-awesome/css/font-awesome.css">
+		<link rel="stylesheet" href="styles.css">
+	</head>
+	<body>
+		<textarea class="editorinput" style="min-height: 500px; padding:20px; outline: 1px solid #aaa;"></textarea>
+		<script src="../bower_components/jquery/dist/jquery.js"></script>
+		<script src="main.js"></script>
+		<script>
+			var editor = new GuacaMarkdownEditor($(".editorinput")); 
+		</script>
+	</body>
+</html>

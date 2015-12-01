@@ -1,0 +1,94 @@
+.guaca-editor {
+	display: inline-block !important;
+	width: 100%;
+}
+
+.guaca-airpopup {
+	padding: 5px;
+	height: 25px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 4px;
+	position: absolute;
+}
+
+.guaca-airpopup span:before {
+	font-size: 16px;
+	font: normal normal normal 16px/normal FontAwesome;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: auto;
+	color: rgba(255,255,255,0.8);
+	padding: 5px;
+}
+
+.guaca-airpopup span:hover:before {
+	color: #FEBB0C;
+}
+
+.guaca-airpopup span.bold:before {
+	content: "\f032";
+}
+
+.guaca-airpopup span.italic:before {
+	content: "\f033";
+}
+
+.guaca-airpopup span.divider:before {
+	border-right: 1px rgba(255, 255, 255, 0.7) solid;
+	content: "";
+	margin-right: 7px;
+}
+
+.guaca-airpopup span.container {
+	display: inline-block;
+	width: 80px;
+}
+
+.guaca-airpopup span.container:before {
+	content: "Heading ▾";
+}
+
+.guaca-airpopup span.container:hover > span  {
+	display: list-item;
+}
+
+.guaca-airpopup span.container > span {
+	padding: 4px;
+	width: 80px;
+	display: none;
+	list-style: none;
+	float: left;
+	background: rgba(0, 0, 0, 0.8);
+	border-top: 1px #000 solid;
+}
+
+.guaca-airpopup span.container > span:first-child{
+	margin-top: 5px;
+}
+
+.guaca-airpopup span.small-heading:before {
+	content: "Small";
+}
+
+.guaca-airpopup span.medium-heading:before {
+	content: "Medium";
+}
+
+.guaca-airpopup span.large-heading:before {
+	content: "Large";
+}
+
+.guaca-airpopup span.paragraph:before {
+	content: "\f1dd";
+}
+
+.guaca-airpopup span.ol:before {
+	content: "\f0cb";
+}
+
+.guaca-airpopup span.ul:before {
+	content: "\f0ca";
+}
+
+.guaca-airpopup span.code:before {
+	content: "\f121";
+}
