@@ -41,13 +41,17 @@ var GuacaMarkdownEditor = (function () {
 					self.onSelectText();
 				});
 			});
+			this.guacaEditorElement.on('blur', function () {
+				self.airPopUp.hide();
+			});
 		}
 	}, {
 		key: "onSelectText",
 		value: function onSelectText() {
 			this.currentSelection = window.getSelection();
+			if (this.currentSelection.type === "Caret") return;
 			var rect = this.currentSelection.getRangeAt(0).getBoundingClientRect();
-			this.airPopUp.setPosition(rect.left, rect.top);
+			this.airPopUp.setPosition(rect);
 		}
 	}, {
 		key: "onSelectStart",
@@ -62,17 +66,22 @@ var GuacaAirPopUp = (function () {
 	function GuacaAirPopUp(editorElement, settings) {
 		babelHelpers.classCallCheck(this, GuacaAirPopUp);
 
+		this.settings = settings || this.getDefaultSettings();
 		this.airPopUp = $('<div></div>');
 		this.airPopUp.addClass("guaca-airpopup");
-		this.addControls(settings || this.getControls(), this.airPopUp);
+		this.addControls(this.settings.controls, this.airPopUp);
 		this.airPopUp.insertAfter(editorElement);
+		this.$window = $(window);
 	}
 
 	// API Start
 
 	babelHelpers.createClass(GuacaAirPopUp, [{
 		key: "setPosition",
-		value: function setPosition(x, y) {
+		value: function setPosition(rect) {
+			var y = this.getComputedYPosition(rect.top, rect.bottom),
+			    x = this.getComputedXPosition(rect.left);
+
 			this.airPopUp.css("top", y);
 			this.airPopUp.css("left", x);
 			this.airPopUp.css("display", "block");
@@ -82,9 +91,34 @@ var GuacaAirPopUp = (function () {
 		value: function hide() {
 			this.airPopUp.css("display", "none");
 		}
+	}, {
+		key: "getHeight",
+		value: function getHeight() {
+			return this.airPopUp.innerHeight();
+		}
+	}, {
+		key: "getWidth",
+		value: function getWidth() {
+			return this.airPopUp.innerWidth();
+		}
 
 		// API End
 
+	}, {
+		key: "getComputedYPosition",
+		value: function getComputedYPosition(top, bottom) {
+			var newYOffset = this.getHeight() + this.settings["y-spacing"];
+			var y;
+			if (top < newYOffset) y = bottom + this.settings["y-spacing"];else y = top - newYOffset;
+			return y + this.$window.scrollTop();
+		}
+	}, {
+		key: "getComputedXPosition",
+		value: function getComputedXPosition(left) {
+			var x = left;
+			if (left + this.getWidth() + this.settings["x-spacing"] > this.$window.innerWidth()) x = this.$window.innerWidth() - this.getWidth() - this.settings["x-spacing"];
+			return x + this.$window.scrollLeft();
+		}
 	}, {
 		key: "addControls",
 		value: function addControls(controls, element) {
@@ -129,6 +163,15 @@ var GuacaAirPopUp = (function () {
 		key: "getControls",
 		value: function getControls() {
 			return ['bold', 'italic', 'divider', ['small-heading', 'medium-heading', 'large-heading'], 'paragraph', 'ol', 'ul', 'code'];
+		}
+	}, {
+		key: "getDefaultSettings",
+		value: function getDefaultSettings() {
+			return {
+				"y-spacing": 8,
+				"x-spacing": 20,
+				"controls": this.getControls()
+			};
 		}
 	}]);
 	return GuacaAirPopUp;

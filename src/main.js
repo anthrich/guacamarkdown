@@ -38,12 +38,16 @@ class GuacaMarkdownEditor {
 				self.onSelectText();
 			});
 		});
+		this.guacaEditorElement.on('blur', () => {
+			self.airPopUp.hide();
+		});
 	}
 	
 	onSelectText() {
 		this.currentSelection = window.getSelection();
+		if(this.currentSelection.type === "Caret") return;
 		var rect = this.currentSelection.getRangeAt(0).getBoundingClientRect();
-		this.airPopUp.setPosition(rect.left, rect.top);
+		this.airPopUp.setPosition(rect);
 	}
 	
 	onSelectStart() {
@@ -53,16 +57,21 @@ class GuacaMarkdownEditor {
 
 class GuacaAirPopUp {
 	
-	constructor(editorElement, settings) {		
+	constructor(editorElement, settings) {
+		this.settings = settings || this.getDefaultSettings();		
 		this.airPopUp = $('<div></div>');
 		this.airPopUp.addClass("guaca-airpopup");
-		this.addControls(settings || this.getControls(), this.airPopUp);
+		this.addControls(this.settings.controls, this.airPopUp);
 		this.airPopUp.insertAfter(editorElement);
+		this.$window = $(window);
 	}
 	
 	// API Start
 	
-	setPosition(x, y) {
+	setPosition(rect) {
+		var y = this.getComputedYPosition(rect.top, rect.bottom),
+			x = this.getComputedXPosition(rect.left);
+			
 		this.airPopUp.css("top", y);
 		this.airPopUp.css("left", x);
 		this.airPopUp.css("display", "block");
@@ -72,7 +81,30 @@ class GuacaAirPopUp {
 		this.airPopUp.css("display", "none");
 	}
 	
+	getHeight() {
+		return this.airPopUp.innerHeight();
+	}
+	
+	getWidth() {
+		return this.airPopUp.innerWidth();
+	}
+	
 	// API End
+	
+	getComputedYPosition(top, bottom) {
+		var newYOffset = this.getHeight() + this.settings["y-spacing"];
+		var y;
+		if (top < newYOffset) y = bottom + this.settings["y-spacing"];
+		else y = top - newYOffset;
+		return y + this.$window.scrollTop();
+	}
+	
+	getComputedXPosition(left) {
+		var x = left;
+		if (left + this.getWidth() + this.settings["x-spacing"] > this.$window.innerWidth()) 
+			x = this.$window.innerWidth() - this.getWidth() - this.settings["x-spacing"];
+		return x + this.$window.scrollLeft();
+	}
 	
 	addControls(controls, element) {
 		for(var control of controls) {
@@ -106,5 +138,13 @@ class GuacaAirPopUp {
 			'ul',
 			'code'
 		];
+	}
+	
+	getDefaultSettings() {
+		return {
+			"y-spacing": 8,
+			"x-spacing": 20,
+			"controls": this.getControls()
+		}
 	}
 }
