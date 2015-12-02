@@ -19,7 +19,11 @@
     "node_modules",
     "bower_components",
     "test",
-    "tests"
+    "tests",
+    "example",
+    "gulpfile.js",
+    "jsonconfig.json",
+    "package.json"
   ],
   "devDependencies": {
     "to-markdown": "~1.3.0"
