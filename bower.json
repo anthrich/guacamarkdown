@@ -5,8 +5,8 @@
   "authors": [
     "Anth Richardson <anth@technicallycompatible.com>"
   ],
-  "description": "Inline editor with markdown output using Hallo.js and to-markdown.js.",
-  "main": "src/main.js",
+  "description": "Inline editor with markdown output using to-markdown.",
+  "main": "dist/GuacaMarkdownEditor.js",
   "keywords": [
     "markdown",
     "editor",
@@ -27,5 +27,8 @@
   "dependencies": {
     "font-awesome": "~4.5.0",
     "jquery": "~2.1.4"
-  }
+  },
+  "moduleType": [
+    "es6"
+  ]
 }
