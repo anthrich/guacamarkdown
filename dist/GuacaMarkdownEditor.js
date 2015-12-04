@@ -159,12 +159,6 @@ class ControlHandlerService {
 	}
 }
 
-const SelectionStatusEnum = {
-	EXCLUSIVE_WHOLE_SELECTION_APPLIED: 0,
-	WHOLE_SELECTION_APPLIED: 1,
-	PARTIAL_SELECTION_MISSING: 2
-}
-
 class BoldMarkdownHandler extends BaseHandler {
 	
 	constructor() {
@@ -174,30 +168,6 @@ class BoldMarkdownHandler extends BaseHandler {
 	
 	execute() {
 		document.execCommand("Bold", false, null);
-		//var currentSelection = this.getCurrentSelection();
-		//if (!currentSelection || currentSelection.rangeCount < 1) return;
-		//var selectionState = this.detectSelectionState(currentSelection);
-		//var boldEle = document.createElement(this.elementType);
-		//currentSelection.getRangeAt(0).surroundContents(boldEle);
-	}
-	
-	detectSelectionState(currentSelection) {
-		var range = currentSelection.getRangeAt(0);
-		var fragment = range.cloneContents();
-		var div = document.createElement("div")
-		div.appendChild(fragment.cloneNode(true));
-		var fragmentHtml = div.innerHTML;
-		var commonAncestorTagName = range.commonAncestorContainer.tagName;
-		commonAncestorTagName = commonAncestorTagName ? commonAncestorTagName.toLowerCase() : "";
-		var commonAncestorIsHandlerElement = commonAncestorTagName === this.elementType;
-
-		if (commonAncestorIsHandlerElement && fragmentHtml === range.commonAncestorContainer.innerHtml) {
-			return SelectionStatusEnum.EXCLUSIVE_WHOLE_SELECTION_APPLIED;
-		} else if (commonAncestorIsHandlerElement) {
-			return SelectionStatusEnum.WHOLE_SELECTION_APPLIED;
-		} else {
-			return SelectionStatusEnum.PARTIAL_SELECTION_MISSING;
-		}
 	}
 }
 
