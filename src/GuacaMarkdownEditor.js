@@ -3,6 +3,8 @@
 /* global $ */
 
 import GuacaAirPopUp from './GuacaAirPopUp';
+import ControlHandlerService from './ControlHandlerService';
+import DefaultHandlerConfig from './DefaultHandlerConfig';
 
 export default class GuacaMarkdownEditor {
 	
@@ -10,12 +12,12 @@ export default class GuacaMarkdownEditor {
 		var self = this;
 		self.inputElement = inputElement;
 		self.guacaEditorElement = this.setUpGuacaMarkdownElement();
-		self.airPopUp = new GuacaAirPopUp(self.guacaEditorElement);
+		self.controlHandlerService = this.setUpControlHandlerService();
+		self.airPopUp = new GuacaAirPopUp(self.guacaEditorElement, self.controlHandlerService);
 		self.currentSelection = null;
 		
 		inputElement.css("display", "none");
 		self.subscribeToEvents();
-		
 	}
 	
 	// API Start 
@@ -42,6 +44,19 @@ export default class GuacaMarkdownEditor {
 		return guacaElement;
 	}
 	
+	setUpControlHandlerService() {
+		var controlHandlerService = new ControlHandlerService();
+		for(var handler of DefaultHandlerConfig)
+		{
+			var HandlerClass = handler.handlerClass;
+			var handlerInstance = new HandlerClass();
+			handlerInstance.registerMarkdownEditor(this);
+			controlHandlerService.registerHandler(handler.alias, handlerInstance);
+		}
+		
+		return controlHandlerService;
+	}
+	
 	subscribeToEvents() {
 		var self = this;
 		this.guacaEditorElement.on('selectstart', () => {
@@ -50,8 +65,11 @@ export default class GuacaMarkdownEditor {
 				self.onSelectText();
 			});
 		});
-		this.guacaEditorElement.on('blur', () => {
-			self.airPopUp.hide();
+		this.guacaEditorElement.on('blur', (event) => {
+			if(event.relatedTarget && $(event.relatedTarget).hasClass("guaca-control"))
+				return true;
+			else
+				self.airPopUp.hide();
 		});
 	}
 	

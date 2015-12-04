@@ -2,12 +2,13 @@
 
 export default class GuacaAirPopUp {
 	
-	constructor(editorElement, settings) {
-		this.settings = settings || this.getDefaultSettings();		
+	constructor(editorElement, controlHandlerService, settings) {
+		this.settings = settings || this.getDefaultSettings();
+		this.controlHandlerService = controlHandlerService;	
 		this.airPopUp = $('<div></div>');
 		this.airPopUp.addClass("guaca-airpopup");
-		this.addControls(this.settings.controls, this.airPopUp);
 		this.airPopUp.insertAfter(editorElement);
+		this.addControls(this.settings.controls, this.airPopUp);
 		this.$window = $(window);
 	}
 	
@@ -46,25 +47,37 @@ export default class GuacaAirPopUp {
 	
 	getComputedXPosition(left) {
 		var x = left;
-		if (left + this.getWidth() + this.settings["x-spacing"] > this.$window.innerWidth()) 
+		if (left + this.getWidth() + this.settings["x-spacing"] > this.$window.innerWidth())
 			x = this.$window.innerWidth() - this.getWidth() - this.settings["x-spacing"];
 		return x + this.$window.scrollLeft();
 	}
 	
 	addControls(controls, element) {
+		var self = this;
 		for(var control of controls) {
 			if(typeof control == "object" && control.length) {
-				var container =  $('<span class="container"></button>');
+				var container =  $('<span class="container"></span>');
 				this.addControls(control, container);
 				element.append(container);
 			}
-			element.append(this.createControl(control));
+			var controlElem = this.createControl(control);
+			element.append(controlElem);
+			var controlHandler = this.controlHandlerService.getHandler(control);
+			if(controlHandler) {
+				controlElem.on("click", function() {
+					var controlAlias = $(this).attr("control-alias");
+					var controlHandler = self.controlHandlerService.getHandler(controlAlias);
+					controlHandler.execute();
+				});	
+			}
 		}
 	}
 	
 	createControl(className) {
 		var control = $('<button></button>');
+		control.addClass("guaca-control");
 		control.addClass(className);
+		control.attr("control-alias", className);
 		return control;
 	}
 	

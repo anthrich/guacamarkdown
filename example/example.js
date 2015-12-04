@@ -7,6 +7,10 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -14,14 +18,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 /* global $ */
 
 var GuacaAirPopUp = (function () {
-	function GuacaAirPopUp(editorElement, settings) {
+	function GuacaAirPopUp(editorElement, controlHandlerService, settings) {
 		_classCallCheck(this, GuacaAirPopUp);
 
 		this.settings = settings || this.getDefaultSettings();
+		this.controlHandlerService = controlHandlerService;
 		this.airPopUp = $('<div></div>');
 		this.airPopUp.addClass("guaca-airpopup");
-		this.addControls(this.settings.controls, this.airPopUp);
 		this.airPopUp.insertAfter(editorElement);
+		this.addControls(this.settings.controls, this.airPopUp);
 		this.$window = $(window);
 	}
 
@@ -73,6 +78,7 @@ var GuacaAirPopUp = (function () {
 	}, {
 		key: "addControls",
 		value: function addControls(controls, element) {
+			var self = this;
 			var _iteratorNormalCompletion = true;
 			var _didIteratorError = false;
 			var _iteratorError = undefined;
@@ -82,11 +88,20 @@ var GuacaAirPopUp = (function () {
 					var control = _step.value;
 
 					if ((typeof control === "undefined" ? "undefined" : _typeof(control)) == "object" && control.length) {
-						var container = $('<span class="container"></button>');
+						var container = $('<span class="container"></span>');
 						this.addControls(control, container);
 						element.append(container);
 					}
-					element.append(this.createControl(control));
+					var controlElem = this.createControl(control);
+					element.append(controlElem);
+					var controlHandler = this.controlHandlerService.getHandler(control);
+					if (controlHandler) {
+						controlElem.on("click", function () {
+							var controlAlias = $(this).attr("control-alias");
+							var controlHandler = self.controlHandlerService.getHandler(controlAlias);
+							controlHandler.execute();
+						});
+					}
 				}
 			} catch (err) {
 				_didIteratorError = true;
@@ -107,7 +122,9 @@ var GuacaAirPopUp = (function () {
 		key: "createControl",
 		value: function createControl(className) {
 			var control = $('<button></button>');
+			control.addClass("guaca-control");
 			control.addClass(className);
+			control.attr("control-alias", className);
 			return control;
 		}
 	}, {
@@ -129,6 +146,134 @@ var GuacaAirPopUp = (function () {
 	return GuacaAirPopUp;
 })();
 
+var BaseHandler = (function () {
+	function BaseHandler() {
+		_classCallCheck(this, BaseHandler);
+
+		this.markdownEditor = null;
+	}
+
+	_createClass(BaseHandler, [{
+		key: "registerMarkdownEditor",
+		value: function registerMarkdownEditor(markdownEditor) {
+			this.markdownEditor = markdownEditor;
+		}
+	}, {
+		key: "getCurrentSelection",
+		value: function getCurrentSelection() {
+			if (this.markdownEditor) {
+				return this.markdownEditor.getCurrentSelection();
+			}
+			throw "registerMarkdownEditor must be called before calling getCurrentSelection.";
+		}
+	}, {
+		key: "execute",
+		value: function execute() {
+			throw "Must override the execute method in " + _typeof(this);
+		}
+	}]);
+
+	return BaseHandler;
+})();
+
+var ControlHandlerService = (function () {
+	function ControlHandlerService() {
+		_classCallCheck(this, ControlHandlerService);
+
+		this.registeredHandlers = [];
+	}
+
+	_createClass(ControlHandlerService, [{
+		key: "registerHandler",
+		value: function registerHandler(alias, handler) {
+			var isControllerInstance = handler instanceof BaseHandler;
+			if (!isControllerInstance) throw "ControlHandlerService.registerHandler can only register BaseHandler extensions";
+			var existingHandlerReg = this.registeredHandlers.find(function (h) {
+				return h.handler === handler;
+			});
+			if (existingHandlerReg) {
+				existingHandlerReg.aliases.push(alias);
+				return;
+			}
+
+			this.registeredHandlers.push({
+				aliases: [alias],
+				handler: handler
+			});
+		}
+	}, {
+		key: "getHandler",
+		value: function getHandler(alias) {
+			var handlerRegistration = this.registeredHandlers.find(function (h) {
+				return h.aliases.some(function (a) {
+					return a === alias;
+				});
+			});
+			if (handlerRegistration) return handlerRegistration.handler;else return null;
+		}
+	}]);
+
+	return ControlHandlerService;
+})();
+
+var SelectionStatusEnum = {
+	EXCLUSIVE_WHOLE_SELECTION_APPLIED: 0,
+	WHOLE_SELECTION_APPLIED: 1,
+	PARTIAL_SELECTION_MISSING: 2
+};
+
+var BoldMarkdownHandler = (function (_BaseHandler) {
+	_inherits(BoldMarkdownHandler, _BaseHandler);
+
+	function BoldMarkdownHandler() {
+		_classCallCheck(this, BoldMarkdownHandler);
+
+		var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(BoldMarkdownHandler).call(this));
+
+		_this.elementType = "b";
+		return _this;
+	}
+
+	_createClass(BoldMarkdownHandler, [{
+		key: "execute",
+		value: function execute() {
+			document.execCommand("Bold", false, null);
+			//var currentSelection = this.getCurrentSelection();
+			//if (!currentSelection || currentSelection.rangeCount < 1) return;
+			//var selectionState = this.detectSelectionState(currentSelection);
+			//var boldEle = document.createElement(this.elementType);
+			//currentSelection.getRangeAt(0).surroundContents(boldEle);
+		}
+	}, {
+		key: "detectSelectionState",
+		value: function detectSelectionState(currentSelection) {
+			var range = currentSelection.getRangeAt(0);
+			var fragment = range.cloneContents();
+			var div = document.createElement("div");
+			div.appendChild(fragment.cloneNode(true));
+			var fragmentHtml = div.innerHTML;
+			var commonAncestorTagName = range.commonAncestorContainer.tagName;
+			commonAncestorTagName = commonAncestorTagName ? commonAncestorTagName.toLowerCase() : "";
+			var commonAncestorIsHandlerElement = commonAncestorTagName === this.elementType;
+
+			if (commonAncestorIsHandlerElement && fragmentHtml === range.commonAncestorContainer.innerHtml) {
+				return SelectionStatusEnum.EXCLUSIVE_WHOLE_SELECTION_APPLIED;
+			} else if (commonAncestorIsHandlerElement) {
+				return SelectionStatusEnum.WHOLE_SELECTION_APPLIED;
+			} else {
+				return SelectionStatusEnum.PARTIAL_SELECTION_MISSING;
+			}
+		}
+	}]);
+
+	return BoldMarkdownHandler;
+})(BaseHandler);
+
+var DefaultHandlerConfig = [{
+	alias: "bold",
+	handlerClass: BoldMarkdownHandler
+}];
+
 var GuacaMarkdownEditor = (function () {
 	function GuacaMarkdownEditor(inputElement) {
 		_classCallCheck(this, GuacaMarkdownEditor);
@@ -136,7 +281,8 @@ var GuacaMarkdownEditor = (function () {
 		var self = this;
 		self.inputElement = inputElement;
 		self.guacaEditorElement = this.setUpGuacaMarkdownElement();
-		self.airPopUp = new GuacaAirPopUp(self.guacaEditorElement);
+		self.controlHandlerService = this.setUpControlHandlerService();
+		self.airPopUp = new GuacaAirPopUp(self.guacaEditorElement, self.controlHandlerService);
 		self.currentSelection = null;
 
 		inputElement.css("display", "none");
@@ -171,6 +317,40 @@ var GuacaMarkdownEditor = (function () {
 			return guacaElement;
 		}
 	}, {
+		key: "setUpControlHandlerService",
+		value: function setUpControlHandlerService() {
+			var controlHandlerService = new ControlHandlerService();
+			var _iteratorNormalCompletion2 = true;
+			var _didIteratorError2 = false;
+			var _iteratorError2 = undefined;
+
+			try {
+				for (var _iterator2 = DefaultHandlerConfig[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+					var handler = _step2.value;
+
+					var HandlerClass = handler.handlerClass;
+					var handlerInstance = new HandlerClass();
+					handlerInstance.registerMarkdownEditor(this);
+					controlHandlerService.registerHandler(handler.alias, handlerInstance);
+				}
+			} catch (err) {
+				_didIteratorError2 = true;
+				_iteratorError2 = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion2 && _iterator2.return) {
+						_iterator2.return();
+					}
+				} finally {
+					if (_didIteratorError2) {
+						throw _iteratorError2;
+					}
+				}
+			}
+
+			return controlHandlerService;
+		}
+	}, {
 		key: "subscribeToEvents",
 		value: function subscribeToEvents() {
 			var self = this;
@@ -180,8 +360,8 @@ var GuacaMarkdownEditor = (function () {
 					self.onSelectText();
 				});
 			});
-			this.guacaEditorElement.on('blur', function () {
-				self.airPopUp.hide();
+			this.guacaEditorElement.on('blur', function (event) {
+				if (event.relatedTarget && $(event.relatedTarget).hasClass("guaca-control")) return true;else self.airPopUp.hide();
 			});
 		}
 	}, {
